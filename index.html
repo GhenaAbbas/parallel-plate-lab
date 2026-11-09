@@ -1,0 +1,455 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Parallel-Plate Capacitor Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: the fixed top line and the four level buttons; the bench (left, pinned) beside Apparatus, Meters and Check
+   (right); Data (table + graph from recorded rows) at the bottom. Stacks on phones. Light mode only (teacher, 2026-10-11).
+   Model (stated in the plan, not on screen, teacher 2026-10-18): ideal parallel plates, edge (fringe) field neglected
+   (d is tiny next to the plate side), uniform field between the plates, no leakage, epsilon0 = 8.85e-12 F/m, air treated
+   as kappa = 1. Battery connected: dV = V, q = C dV with C = kappa eps0 A / d, E = dV / d. Battery disconnected: q stays
+   fixed, dV = q / C, E = dV / d = q / (kappa eps0 A). The dielectric's surface (bound) charge is drawn faintly, with
+   density sigma (1 - 1/kappa). kappa values from the teacher's dielectric-constant table (Serway, Table 26.1). */
+:root {
+  --bg: #f5f6f8;
+  --surface: #ffffff;
+  --fg: #1b2733;
+  --muted: #5d6b78;
+  --line: #d9dee4;
+  --accent: #6b2fa0;          /* the deck's purple */
+  --pos: #d1343f;             /* positive charge: red */
+  --neg: #2463c4;             /* negative charge: blue */
+  --ok: #1f8a4c;
+  --warn: #b5541c;
+  --wire: #3b4652;
+  --metal: #9aa6b2;
+  --metal-hi: #d7dee5;
+  --field: #e0902a;
+  --font-body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --font-num: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 16px; line-height: 1.45; }
+.wrap { max-width: 1180px; margin: 0 auto; padding-inline: 16px; padding-block: 18px 28px; display: grid; gap: 14px; }
+h1 { font-size: 1.6rem; margin: 0; color: var(--accent); }
+.intro { margin: 0; border: 2px solid var(--accent); border-radius: 10px; padding: 10px 14px; font-size: 1.1rem; font-weight: 700; background: var(--surface); }
+.btns { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.lvl-lbl { font-weight: 700; color: var(--muted); }
+button, select { font: inherit; cursor: pointer; }
+.pick { border: 1.5px solid var(--line); background: var(--surface); color: var(--fg); border-radius: 999px; padding: 7px 16px; font-size: 1rem; }
+.pick[aria-pressed="true"] { border-color: var(--accent); background: var(--accent); color: #fff; font-weight: 700; }
+.lab { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: 14px; align-items: start; }
+.side { display: grid; gap: 14px; min-width: 0; }
+.pinned { position: sticky; top: 8px; }
+@media (max-width: 900px) { .lab { grid-template-columns: minmax(0, 1fr); } .pinned { position: static; } }
+.box { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; display: grid; gap: 10px; min-width: 0; align-content: start; }
+.box h2 { margin: 0; font-size: 0.8rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.box svg { display: block; width: 100%; height: auto; }
+.row { display: grid; grid-template-columns: 8.5em minmax(0, 1fr); gap: 8px; align-items: center; }
+.row .lab2 { font-weight: 700; font-size: 0.95rem; }
+.opt { border: 1.5px solid var(--line); background: var(--bg); color: var(--fg); border-radius: 8px; padding: 6px 12px; font-size: 1rem; }
+.opt.num { font-family: var(--font-num); }
+.opt[aria-pressed="true"] { border-color: var(--accent); background: #f1e9f8; font-weight: 700; }
+.sw { border: 1.5px solid var(--line); background: var(--bg); color: var(--fg); border-radius: 10px; padding: 9px 16px; font-size: 1rem; font-weight: 700; }
+.sw[aria-pressed="true"] { border-color: var(--accent); background: var(--accent); color: #fff; }
+.slide { display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; gap: 8px; align-items: center; }
+.slide input[type=range] { width: 100%; accent-color: var(--accent); }
+.slide .v { font-family: var(--font-num); font-size: 1.1rem; min-width: 5.2em; text-align: right; font-variant-numeric: tabular-nums; }
+.step { border: 1.5px solid var(--line); background: var(--bg); border-radius: 8px; padding: 4px 10px; font-family: var(--font-num); }
+.note { margin: 0; font-size: 0.88rem; color: var(--muted); }
+.meters { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.meter { border: 1.5px solid var(--accent); border-radius: 10px; padding: 8px 10px; display: grid; gap: 2px; }
+.meter .lbl { font-size: 0.82rem; color: var(--muted); line-height: 1.25; }
+.meter .val { font-family: var(--font-num); font-size: 1.35rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.meter.pos { border-color: var(--pos); }
+.meter.fld { border-color: var(--field); }
+@media (max-width: 560px) { .meters { grid-template-columns: minmax(0, 1fr); } .row { grid-template-columns: minmax(0, 1fr); } }
+.act { border: 0; border-radius: 10px; padding: 9px 16px; font-size: 1rem; font-weight: 700; color: #fff; background: var(--accent); }
+.ghost { border: 1.5px solid var(--line); background: transparent; color: var(--fg); border-radius: 10px; padding: 8px 12px; }
+table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
+th, td { text-align: left; padding: 5px 8px; border-bottom: 1px solid var(--line); }
+th { color: var(--muted); font-weight: 400; font-size: 0.82rem; }
+td.num, th.num { text-align: right; }
+td.num { font-family: var(--font-num); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.tablewrap { overflow-x: auto; }
+.empty td { color: var(--muted); font-style: italic; }
+.data { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 14px; align-items: start; }
+@media (max-width: 900px) { .data { grid-template-columns: minmax(0, 1fr); } }
+.inrow { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.inrow select { padding: 6px 8px; border: 1.5px solid var(--line); border-radius: 8px; background: var(--surface); }
+.res { margin: 0; font-weight: 700; }
+.res.ok { color: var(--ok); }
+.res.bad { color: var(--warn); }
+[hidden] { display: none !important; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Parallel-Plate Capacitor Lab</h1>
+  <p class="intro">Explore the simulation freely, then answer the questions in your task.</p>
+  <div class="btns" role="group" aria-labelledby="lv-lbl">
+    <span class="lvl-lbl" id="lv-lbl">Your level:</span>
+    <button class="pick" data-level="Emerging">Emerging</button>
+    <button class="pick" data-level="Developing">Developing</button>
+    <button class="pick" data-level="Proficient">Proficient</button>
+    <button class="pick" data-level="Exceeding">Exceeding</button>
+  </div>
+
+  <div class="lab">
+    <div class="side pinned">
+      <section class="box" aria-labelledby="h-bench">
+        <h2 id="h-bench">Bench</h2>
+        <svg id="bench" viewBox="0 0 540 450" role="img" aria-label="Two parallel metal plates on stands, a material between them, a battery with a switch, a voltmeter, a charge meter and a field meter"></svg>
+      </section>
+    </div>
+
+    <div class="side">
+      <section class="box" aria-labelledby="h-app">
+        <h2 id="h-app">Apparatus</h2>
+        <div class="row"><span class="lab2">Plate side</span>
+          <div class="slide"><button class="step" data-k="side" data-d="-0.1" aria-label="Plate side smaller">−</button>
+            <input type="range" id="side" min="8" max="20" step="0.1" aria-label="Plate side in cm">
+            <button class="step" data-k="side" data-d="0.1" aria-label="Plate side larger">+</button><span class="v" id="sideV"></span></div></div>
+        <div class="row"><span class="lab2">Separation</span>
+          <div class="slide"><button class="step" data-k="d" data-d="-0.1" aria-label="Separation smaller">−</button>
+            <input type="range" id="d" min="0.8" max="4" step="0.1" aria-label="Plate separation in mm">
+            <button class="step" data-k="d" data-d="0.1" aria-label="Separation larger">+</button><span class="v" id="dV"></span></div></div>
+        <div class="row" id="matrow"><span class="lab2">Between the plates</span><div class="btns" id="mat"></div></div>
+        <div class="row" id="xrow" hidden><span class="lab2">Material X</span><div class="btns">
+          <button class="sw" id="xIn">Insert X</button><button class="sw" id="xOut">Remove X</button></div></div>
+        <div class="row" id="batrow"><span class="lab2">Battery</span><div class="btns" id="bat"></div></div>
+        <div class="row" id="swrow"><span class="lab2">Switch</span><div class="btns">
+          <button class="sw" id="con">Connect</button><button class="sw" id="dis">Disconnect</button></div></div>
+        <p class="note" id="appnote"></p>
+      </section>
+
+      <section class="box" aria-labelledby="h-met">
+        <h2 id="h-met">Meters</h2>
+        <div class="meters" id="meters"></div>
+        <div class="btns"><button class="act" id="record">Record</button><button class="ghost" id="clear">Clear table</button></div>
+        <p class="note" id="recmsg" role="status"></p>
+      </section>
+
+      <section class="box" id="checkbox" aria-labelledby="h-chk" hidden>
+        <h2 id="h-chk">Check material X</h2>
+        <div class="inrow">
+          <label for="xpick">Material X is</label>
+          <select id="xpick"></select>
+          <button class="act" id="check">Check</button>
+        </div>
+        <p class="res" id="xres" role="status"></p>
+      </section>
+    </div>
+  </div>
+
+  <section class="box" aria-labelledby="h-data">
+    <h2 id="h-data">Data</h2>
+    <div class="data">
+      <div class="tablewrap" id="table"></div>
+      <div>
+        <div class="row" id="axisrow"><span class="lab2">Graph: charge against</span><div class="btns" id="axis"></div></div>
+        <svg id="graph" viewBox="0 0 360 250" role="img" aria-label="Graph of your recorded rows"></svg>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+const NS = "http://www.w3.org/2000/svg";
+const E0 = 8.85e-12;                       // F/m
+const BATS = [6, 9, 12];
+const MATS = [["Air", 1], ["Teflon", 2.1], ["Polystyrene", 2.56], ["Paper", 3.7], ["Pyrex glass", 5.6]];
+// the teacher's dielectric-constant table; X is one of these (hidden)
+const TABLE = ["Air (dry)", "Bakelite", "Fused quartz", "Mylar", "Neoprene rubber", "Nylon", "Paper", "Paraffin-impregnated paper",
+  "Polystyrene", "Polyvinyl chloride", "Porcelain", "Pyrex glass", "Silicone oil", "Strontium titanate", "Teflon", "Vacuum", "Water"];
+const X_NAME = "Pyrex glass", X_K = 5.6, X_Q = 764e-12;   // Exceeding: pre-charged, no battery
+const PRESETS = {
+  Emerging:   { V: 6,  side: 18,   d: 2.0, mat: "Air" },
+  Developing: { V: 12, side: 12.4, d: 1.2, mat: "Air" },
+  Proficient: { V: 9,  side: 15,   d: 2.0, mat: "Air" },
+  Exceeding:  { V: 0,  side: 15,   d: 2.0, mat: "X" }
+};
+const S = { level: "Proficient", V: 9, side: 15, d: 2.0, mat: "Air", conn: true, q: 0, rows: [], axis: "A" };
+const exc = () => S.level === "Exceeding";
+const kappa = () => S.mat === "X" ? X_K : (MATS.find(m => m[0] === S.mat) || ["", 1])[1];
+
+/* ---------- physics ---------- */
+function state() {
+  const A = (S.side / 100) ** 2, d = S.d / 1000, C = kappa() * E0 * A / d;
+  const q = S.conn ? C * S.V : S.q;          // connected: dV = battery; disconnected: the charge cannot change
+  const dV = q / C;
+  return { A, d, C, q, dV, E: dV / d, sigma: q / A };
+}
+// before any change of set-up, freeze the charge if the battery is disconnected
+function freeze() { if (!S.conn) return; S.q = state().q; }
+
+/* ---------- formatting ---------- */
+const fmtV = v => (Math.abs(v) < 0.005 ? 0 : v).toFixed(2);
+const fmtQ = q => Math.round(q * 1e12).toLocaleString("en-US");
+const fmtE = e => Math.round(e).toLocaleString("en-US");
+const fmtA = side => (Math.round(side * side * 100) / 100).toLocaleString("en-US");
+
+/* ---------- bench drawing ---------- */
+const svg = document.getElementById("bench");
+function el(tag, attrs, text, parent) {
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (text != null) e.textContent = text;
+  (parent || svg).appendChild(e);
+  return e;
+}
+const W = { stroke: "var(--wire)", "stroke-width": 3, fill: "none", "stroke-linecap": "round", "stroke-linejoin": "round" };
+const MAT_COL = { Air: null, Teflon: "#f4f4f1", Polystyrene: "#dfe8f1", Paper: "#f3e7c9", "Pyrex glass": "#cfeef0", X: "#d9d2e6" };
+
+// a bench instrument: a dark body with its name and a display showing the live reading
+function meter(x, y, name, reading, col) {
+  const w = 104, hgt = 46;
+  el("rect", { x: x - w / 2, y: y - hgt / 2, width: w, height: hgt, rx: 7, fill: "#2f3640", stroke: col, "stroke-width": 2.5 });
+  el("text", { x, y: y - hgt / 2 + 13, "font-size": 10.5, "font-weight": 700, fill: "#ffffff", "text-anchor": "middle", "letter-spacing": "0.04em" }, name);
+  el("rect", { x: x - w / 2 + 6, y: y - 4, width: w - 12, height: 21, rx: 3, fill: "#dfe8d4" });
+  el("text", { x: x + w / 2 - 10, y: y + 12, "font-size": 13.5, "font-family": "var(--font-num)", fill: "#1b2733", "text-anchor": "end" }, reading);
+}
+
+function draw() {
+  const st = state();
+  svg.innerHTML = "";
+  const cx = 270, cy = 250;
+  const h = S.side * 11.5;                // plate height on screen (8 cm -> 92 px, 20 cm -> 230 px)
+  const gap = S.d * 24;                   // 0.8 mm -> 19 px, 4 mm -> 96 px
+  const dep = h * 0.26;                   // perspective depth of each plate
+  const t = 7;                            // plate thickness on screen
+  const xl = cx - gap / 2, xr = cx + gap / 2, top = cy - h / 2, bot = cy + h / 2;
+  const ox = dep * 0.55, oy = dep * 0.45;
+  const BENCH = 396;
+  // bench surface and insulating stands
+  el("rect", { x: 20, y: BENCH, width: 500, height: 14, rx: 4, fill: "#d8c9ad" });
+  el("rect", { x: 20, y: BENCH + 14, width: 500, height: 6, fill: "#b9a784" });
+  for (const x of [xl - t / 2 - 4, xr + t / 2 - 4]) {
+    el("rect", { x, y: bot, width: 8, height: BENCH - bot, fill: "#5a4a3a" });
+    el("rect", { x: x - 14, y: BENCH - 8, width: 36, height: 8, rx: 2, fill: "#5a4a3a" });
+  }
+  // dielectric slab between the plates
+  const col = MAT_COL[S.mat];
+  if (col) {
+    el("polygon", { points: `${xl},${top} ${xl + ox},${top - oy} ${xr + ox},${top - oy} ${xr},${top}`, fill: col, stroke: "#9aa", "stroke-width": 1 });
+    el("rect", { x: xl, y: top, width: gap, height: h, fill: col, stroke: "#9aa", "stroke-width": 1 });
+    el("text", { x: cx + 60, y: BENCH - 14, "text-anchor": "start", "font-size": 13, "font-weight": 700, fill: "var(--muted)" },
+       S.mat === "X" ? "Material X" : S.mat);
+  }
+  // field lines between the plates: density proportional to E
+  const nF = Math.max(0, Math.min(26, Math.round(st.E * h / 60000)));
+  for (let i = 0; i < nF; i++) {
+    const y = top + (i + 0.5) * h / nF;
+    el("line", { x1: xl + 3, y1: y, x2: xr - 7, y2: y, stroke: "var(--field)", "stroke-width": 1.6 });
+    el("polygon", { points: `${xr - 3},${y} ${xr - 9},${y - 3.5} ${xr - 9},${y + 3.5}`, fill: "var(--field)" });
+  }
+  // plates (+ on the left, − on the right): top face, side face, front face
+  for (const [x, sgn] of [[xl, 1], [xr, -1]]) {
+    const x0 = sgn > 0 ? x - t : x;
+    el("polygon", { points: `${x0},${top} ${x0 + ox},${top - oy} ${x0 + t + ox},${top - oy} ${x0 + t},${top}`, fill: "var(--metal-hi)", stroke: "#7d8994", "stroke-width": 1 });
+    el("polygon", { points: `${x0 + t},${top} ${x0 + t + ox},${top - oy} ${x0 + t + ox},${bot - oy} ${x0 + t},${bot}`, fill: "#b9c3cc", stroke: "#7d8994", "stroke-width": 1 });
+    el("rect", { x: x0, y: top, width: t, height: h, fill: "var(--metal)", stroke: "#6c7884", "stroke-width": 1 });
+  }
+  // free charge on the plates: number of signs proportional to the charge density
+  const nQ = Math.max(0, Math.min(24, Math.round(st.sigma * 1e9 * h / 900)));
+  for (let i = 0; i < nQ; i++) {
+    const y = top + (i + 0.5) * h / nQ + 5;
+    el("text", { x: xl - t - 9, y, "font-size": 14, "font-weight": 700, fill: "var(--pos)", "text-anchor": "middle" }, "+");
+    el("text", { x: xr + t + ox + 9, y: y - oy * 0.3, "font-size": 14, "font-weight": 700, fill: "var(--neg)", "text-anchor": "middle" }, "−");
+  }
+  // the material's surface charge (faint), opposite to the nearby plate
+  if (kappa() > 1.01) {
+    const nB = Math.round(nQ * (1 - 1 / kappa()));
+    for (let i = 0; i < nB; i++) {
+      const y = top + (i + 0.5) * h / Math.max(nB, 1) + 4;
+      el("text", { x: xl + 6, y, "font-size": 11, "font-weight": 700, fill: "var(--neg)", opacity: 0.45, "text-anchor": "middle" }, "−");
+      el("text", { x: xr - 6, y, "font-size": 11, "font-weight": 700, fill: "var(--pos)", opacity: 0.45, "text-anchor": "middle" }, "+");
+    }
+  }
+  // leads from the top edges of the plates, spread out to x = 150 and 390
+  const lx = xl - t / 2 + ox / 2, rx = xr + t / 2 + ox / 2, ly = top - oy / 2, YS = 108, XL = 150, XR = 390, YV = 74, YB = 28;
+  el("polyline", { points: `${lx},${ly} ${lx},${YS} ${XL},${YS} ${XL},${exc() ? YV : YB}`, ...W });
+  el("polyline", { points: `${rx},${ly} ${rx},${YS} ${XR},${YS} ${XR},${exc() ? YV : YB}`, ...W });
+  // voltmeter branch across the plates
+  el("polyline", { points: `${XL},${YV} ${cx - 52},${YV}`, ...W, "stroke-width": 2 });
+  el("polyline", { points: `${cx + 52},${YV} ${XR},${YV}`, ...W, "stroke-width": 2 });
+  el("circle", { cx: XL, cy: YV, r: 3.5, fill: "var(--wire)" }); el("circle", { cx: XR, cy: YV, r: 3.5, fill: "var(--wire)" });
+  meter(cx, YV, "VOLTMETER", fmtV(st.dV) + " V", "var(--accent)");
+  // battery and switch on the top line (not in Exceeding: no battery)
+  if (!exc()) {
+    // a real battery lying on its side: metal nub (+) on the left, gold band, dark body with its voltage, flat end (−)
+    const b0 = 186, b1 = 292, sx = 318;
+    el("polyline", { points: `${XL},${YB} ${b0 - 9},${YB}`, ...W });
+    el("polyline", { points: `${b1},${YB} ${sx},${YB}`, ...W });
+    el("polyline", { points: `${sx + 32},${YB} ${XR},${YB}`, ...W });
+    el("rect", { x: b0 - 9, y: YB - 6, width: 11, height: 12, rx: 2, fill: "#b8c0c8", stroke: "#6c7884", "stroke-width": 1 });
+    el("rect", { x: b0, y: YB - 15, width: b1 - b0, height: 30, rx: 6, fill: "#2f3640", stroke: "#1b2026", "stroke-width": 1.5 });
+    el("rect", { x: b0, y: YB - 15, width: 24, height: 30, rx: 6, fill: "#c9a227" });
+    el("rect", { x: b0 + 18, y: YB - 15, width: 6, height: 30, fill: "#c9a227" });
+    el("rect", { x: b0 + 2, y: YB - 12, width: b1 - b0 - 4, height: 5, rx: 2.5, fill: "#ffffff", opacity: 0.18 });
+    el("text", { x: (b0 + 24 + b1 - 22) / 2, y: YB + 6, "font-size": 15, "font-weight": 700, "text-anchor": "middle", fill: "#ffffff" }, S.V + " V");
+    el("text", { x: b0 + 11, y: YB + 6, fill: "#7a1d24", "font-size": 17, "font-weight": 700, "text-anchor": "middle" }, "+");
+    el("text", { x: b1 - 11, y: YB + 6, fill: "#ffffff", "font-size": 17, "font-weight": 700, "text-anchor": "middle" }, "−");
+    el("circle", { cx: sx, cy: YB, r: 4, fill: "var(--wire)" });
+    el("circle", { cx: sx + 32, cy: YB, r: 4, fill: "var(--wire)" });
+    el("line", S.conn ? { x1: sx, y1: YB, x2: sx + 32, y2: YB, stroke: "var(--accent)", "stroke-width": 4, "stroke-linecap": "round" }
+                      : { x1: sx, y1: YB, x2: sx + 26, y2: YB - 20, stroke: "var(--accent)", "stroke-width": 4, "stroke-linecap": "round" });
+    el("text", { x: XR + 8, y: YB + 4, "font-size": 12, "text-anchor": "start", fill: "var(--muted)" }, S.conn ? "connected" : "disconnected");
+  }
+  // field probe: in from the right side to the middle of the gap
+  el("line", { x1: cx, y1: cy, x2: 434, y2: cy, stroke: "var(--field)", "stroke-width": 1.5 });
+  el("circle", { cx, cy, r: 3.5, fill: "var(--field)" });
+  meter(484, cy, "FIELD METER", fmtE(st.E) + " V/m", "var(--field)");
+  // charge meter on the + plate (not in Exceeding)
+  if (!exc()) {
+    el("polyline", { points: `${xl - t},${bot - 14} 58,${bot - 14} 58,${cy + 23}`, stroke: "var(--pos)", "stroke-width": 1.5, fill: "none" });
+    meter(58, cy, "CHARGE METER", (fmtQ(st.q) === "0" ? "0" : "+" + fmtQ(st.q)) + " pC", "var(--pos)");
+  }
+  el("text", { x: 270, y: 442, "font-size": 12, fill: "var(--muted)", "text-anchor": "middle" },
+     "Orange arrows: electric field between the plates");
+}
+
+/* ---------- controls ---------- */
+function optButtons(id, list, label, onPick) {
+  const box = document.getElementById(id); box.innerHTML = "";
+  for (const v of list) {
+    const b = document.createElement("button"); b.className = "opt"; b.textContent = label(v); b.dataset.v = v;
+    b.addEventListener("click", () => onPick(v)); box.appendChild(b);
+  }
+}
+optButtons("bat", BATS, v => v + " V", v => { freeze(); S.V = v; update(); });
+optButtons("mat", MATS.map(m => m[0]), v => v, v => { freeze(); S.mat = v; update(); });
+optButtons("axis", ["A", "d"], v => v === "A" ? "Plate area" : "Separation", v => { S.axis = v; drawGraph(); syncUI(); });
+const xpick = document.getElementById("xpick");
+xpick.innerHTML = `<option value="">Choose a material</option>` + TABLE.map(t => `<option>${t}</option>`).join("");
+
+function setVal(k, v) {
+  const lim = k === "side" ? [8, 20] : [0.8, 4];
+  freeze();
+  S[k] = Math.round(Math.min(lim[1], Math.max(lim[0], v)) * 10) / 10;
+  update();
+}
+document.getElementById("side").addEventListener("input", e => setVal("side", Number(e.target.value)));
+document.getElementById("d").addEventListener("input", e => setVal("d", Number(e.target.value)));
+document.querySelectorAll(".step").forEach(b => b.addEventListener("click", () => setVal(b.dataset.k, S[b.dataset.k] + Number(b.dataset.d))));
+document.getElementById("con").addEventListener("click", () => { S.conn = true; update(); });
+document.getElementById("dis").addEventListener("click", () => { freeze(); S.conn = false; update(); });
+document.getElementById("xIn").addEventListener("click", () => { S.mat = "X"; update(); });
+document.getElementById("xOut").addEventListener("click", () => { S.mat = "Air"; update(); });
+
+function setLevel(lv) {
+  S.level = lv; Object.assign(S, PRESETS[lv]); S.rows = [];
+  S.conn = lv !== "Exceeding"; S.q = lv === "Exceeding" ? X_Q : 0;
+  xpick.value = ""; document.getElementById("xres").textContent = ""; msg("");
+  buildMeters(); update(); buildTable();
+}
+document.querySelectorAll(".pick").forEach(b => b.addEventListener("click", () => setLevel(b.dataset.level)));
+
+function syncUI() {
+  document.querySelectorAll(".pick").forEach(b => b.setAttribute("aria-pressed", b.dataset.level === S.level));
+  document.querySelectorAll("#bat .opt").forEach(b => b.setAttribute("aria-pressed", Number(b.dataset.v) === S.V));
+  document.querySelectorAll("#mat .opt").forEach(b => b.setAttribute("aria-pressed", b.dataset.v === S.mat));
+  document.querySelectorAll("#axis .opt").forEach(b => b.setAttribute("aria-pressed", b.dataset.v === S.axis));
+  document.getElementById("con").setAttribute("aria-pressed", S.conn);
+  document.getElementById("dis").setAttribute("aria-pressed", !S.conn);
+  document.getElementById("xIn").setAttribute("aria-pressed", S.mat === "X");
+  document.getElementById("xOut").setAttribute("aria-pressed", S.mat !== "X");
+  document.getElementById("side").value = S.side; document.getElementById("d").value = S.d;
+  document.getElementById("sideV").textContent = S.side.toFixed(1) + " cm";
+  document.getElementById("dV").textContent = S.d.toFixed(1) + " mm";
+  for (const id of ["matrow", "batrow", "swrow"]) document.getElementById(id).hidden = exc();
+  document.getElementById("xrow").hidden = !exc();
+  document.getElementById("checkbox").hidden = !exc();
+  document.getElementById("axisrow").hidden = exc();
+  document.getElementById("appnote").textContent = exc()
+    ? "The plates were charged earlier. There is no battery: nothing is connected to the plates."
+    : (S.conn ? "The battery is connected to the plates." : "The battery is disconnected: nothing is connected to the plates.");
+}
+
+/* ---------- meters ---------- */
+function meterHTML(cls, lbl, id) { return `<div class="meter ${cls}"><span class="lbl">${lbl}</span><span class="val" id="${id}"></span></div>`; }
+function buildMeters() {
+  document.getElementById("meters").innerHTML =
+    meterHTML("", "Voltmeter across the plates: ΔV (V)", "mV") +
+    (exc() ? "" : meterHTML("pos", "Charge on the + plate (pC)", "mQ")) +
+    meterHTML("fld", "Field between the plates: E (V/m)", "mE");
+}
+function update() {
+  const st = state();
+  syncUI();
+  document.getElementById("mV").textContent = fmtV(st.dV);
+  if (!exc()) document.getElementById("mQ").textContent = fmtQ(st.q) === "0" ? "0" : "+" + fmtQ(st.q);
+  document.getElementById("mE").textContent = fmtE(st.E);
+  draw();
+}
+
+/* ---------- data ---------- */
+const msg = t => { document.getElementById("recmsg").textContent = t; };
+function buildTable() {
+  const box = document.getElementById("table");
+  const head = exc()
+    ? ["Material X", "Plate side (cm)", "Separation (mm)", "ΔV (V)", "E (V/m)"]
+    : ["Material", "Battery (V)", "Plate side (cm)", "Plate area (cm²)", "Separation (mm)", "ΔV (V)", "Charge (pC)", "E (V/m)"];
+  let h = `<table><thead><tr>${head.map((x, i) => `<th${i ? ' class="num"' : ""}>${x}</th>`).join("")}</tr></thead><tbody>`;
+  if (!S.rows.length) h += `<tr class="empty"><td colspan="${head.length}">Press Record to add a row.</td></tr>`;
+  for (const r of S.rows) {
+    h += exc()
+      ? `<tr><td>${r.mat === "X" ? "inserted" : "removed"}</td><td class="num">${r.side}</td><td class="num">${r.d}</td><td class="num">${r.dV}</td><td class="num">${r.E}</td></tr>`
+      : `<tr><td>${r.mat}</td><td class="num">${r.bat}</td><td class="num">${r.side}</td><td class="num">${r.area}</td><td class="num">${r.d}</td><td class="num">${r.dV}</td><td class="num">${r.q}</td><td class="num">${r.E}</td></tr>`;
+  }
+  box.innerHTML = h + `</tbody></table>`;
+  drawGraph();
+}
+document.getElementById("record").addEventListener("click", () => {
+  const st = state();
+  S.rows.push({ mat: S.mat, bat: S.conn ? String(S.V) : "off", side: S.side.toFixed(1), area: fmtA(S.side), d: S.d.toFixed(1),
+                dV: fmtV(st.dV), q: fmtQ(st.q), E: fmtE(st.E), A: S.side * S.side, dmm: S.d, qpc: st.q * 1e12, Ev: st.E });
+  msg("Row " + S.rows.length + " recorded."); buildTable();
+});
+document.getElementById("clear").addEventListener("click", () => { S.rows = []; msg(""); buildTable(); });
+
+/* ---------- graph from recorded rows ---------- */
+const gsvg = document.getElementById("graph");
+function nice(max) { const p = Math.pow(10, Math.floor(Math.log10(max))); for (const m of [1, 2, 2.5, 5, 10]) if (m * p >= max) return m * p; return 10 * p; }
+function drawGraph() {
+  gsvg.innerHTML = "";
+  const g = (tag, a, t) => el(tag, a, t, gsvg);
+  const L = 58, R = 345, T = 14, B = 205;
+  const xs = exc() ? "d" : S.axis;
+  const ykey = exc() ? "Ev" : "qpc";
+  const pts = S.rows.map(r => [xs === "A" ? r.A : r.dmm, r[ykey]]);
+  const xmax = xs === "A" ? 400 : 4, ymax = nice(Math.max(1, ...pts.map(p => p[1])) * 1.1);
+  g("line", { x1: L, y1: B, x2: R, y2: B, stroke: "var(--fg)", "stroke-width": 1.5 });
+  g("line", { x1: L, y1: B, x2: L, y2: T, stroke: "var(--fg)", "stroke-width": 1.5 });
+  for (let i = 0; i <= 4; i++) {
+    const xv = xmax * i / 4, yv = ymax * i / 4, x = L + (R - L) * i / 4, y = B - (B - T) * i / 4;
+    g("text", { x, y: B + 16, "font-size": 11, "text-anchor": "middle", fill: "var(--muted)" }, xs === "A" ? xv : xv.toFixed(1));
+    g("text", { x: L - 6, y: y + 4, "font-size": 11, "text-anchor": "end", fill: "var(--muted)" }, Math.round(yv).toLocaleString("en-US"));
+    if (i) g("line", { x1: L, y1: y, x2: R, y2: y, stroke: "var(--line)", "stroke-width": 1 });
+  }
+  g("text", { x: (L + R) / 2, y: 240, "font-size": 12, "text-anchor": "middle", fill: "var(--fg)" }, xs === "A" ? "Plate area (cm²)" : "Separation (mm)");
+  g("text", { x: 12, y: (T + B) / 2, "font-size": 12, "text-anchor": "middle", fill: "var(--fg)", transform: `rotate(-90 12 ${(T + B) / 2})` },
+    exc() ? "E (V/m)" : "Charge (pC)");
+  for (const [xv, yv] of pts)
+    g("circle", { cx: L + (R - L) * xv / xmax, cy: B - (B - T) * yv / ymax, r: 4.5, fill: "var(--accent)" });
+  if (!pts.length) g("text", { x: (L + R) / 2, y: (T + B) / 2, "font-size": 12, "text-anchor": "middle", fill: "var(--muted)" }, "Recorded rows appear here.");
+}
+
+/* ---------- Exceeding check ---------- */
+document.getElementById("check").addEventListener("click", () => {
+  const out = document.getElementById("xres");
+  if (!xpick.value) { out.textContent = "Choose a material first."; out.className = "res bad"; return; }
+  const ok = xpick.value === X_NAME;
+  out.textContent = ok ? "Matches." : "Doesn't match."; out.className = "res " + (ok ? "ok" : "bad");
+});
+
+setLevel("Proficient");
+</script>
+</body>
+</html>
